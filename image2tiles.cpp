@@ -32,8 +32,8 @@ crop (cv::Mat img, cv::Rect roi, int x, int y, int z)
 	if (DEBUG)
 	printf("    roi - x:%d, y:%d, width:%d, height:%d\n", roi.x, roi.y, roi.width, roi.height);
 
-    // Crop the original image to the defined ROI
-    cv::Mat crop = img(roi);
+	// Crop the original image to the defined ROI
+	cv::Mat crop = img(roi);
 
 	cv:cvtColor(crop, crop, cv::COLOR_RGB2RGBA);
 
@@ -46,7 +46,7 @@ crop (cv::Mat img, cv::Rect roi, int x, int y, int z)
 	std::experimental::filesystem::create_directories(folderName);
 
 	// Write final image to disk
-    cv::imwrite(std::to_string(z) + "/" + std::to_string(x) + "/" + std::to_string(y) + ".png", background);
+	cv::imwrite(std::to_string(z) + "/" + std::to_string(x) + "/" + std::to_string(y) + ".png", background);
 
 	if (DEBUG)
 	printf("    DONE\n");
@@ -60,24 +60,24 @@ main ()
 	printf("Read image ...\n");
 	cv::Mat img = cv::imread("img.jpg", cv::IMREAD_UNCHANGED);
 
-    if (img.empty())
-    {
-        std::cout << "!!! imread() failed to open target image" << std::endl;
-        return -1;        
-    }
+	if (img.empty())
+	{
+	    std::cout << "!!! imread() failed to open target image" << std::endl;
+	    return -1;        
+	}
 
 	printf("Start cuttig it ...\n");
 
-    /* Set Region of Interest */
+	/* Set Region of Interest */
 
-    int offset_x = 45;
-    int offset_y = -195;
+	int offset_x = 45;
+	int offset_y = -195;
 
-    cv::Rect roi;
-    roi.x = offset_x;
-    roi.y = offset_y;
-    roi.width = 255;
-    roi.height = 255;
+	cv::Rect roi;
+	roi.x = offset_x;
+	roi.y = offset_y;
+	roi.width = 255;
+	roi.height = 255;
 
 	// TODO Extract values into variables or parse from arguments
 	for (int x = 3638; roi.x <= img.size().width; x++)
