@@ -12,6 +12,14 @@ int DEBUG = 1;
 #define log(fmt, ...) \
 	printf(fmt "\n", ##__VA_ARGS__); \
 
+typedef struct overflow
+{
+	int top;
+	int bottom;
+	int left;
+	int right;
+} overflow_t;
+
 void
 crop (cv::Mat img, cv::Rect roi, int x, int y, int z)
 {
@@ -21,17 +29,18 @@ crop (cv::Mat img, cv::Rect roi, int x, int y, int z)
 
 	cv::Mat background(roi.width, roi.height, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 
-	int overflow_top = roi.y < 0 ? -roi.y : 0;
-	int overflow_bottom = roi.y + roi.height > img.size().height ? roi.y + roi.height - img.size().height : 0;
-	int overflow_left = roi.x < 0 ? -roi.x : 0;
-	int overflow_right = roi.x + roi.width > img.size().width ? roi.x + roi.width - img.size().width : 0;
+	overflow_t flow;
+	flow.top = roi.y < 0 ? -roi.y : 0;
+	flow.bottom = roi.y + roi.height > img.size().height ? roi.y + roi.height - img.size().height : 0;
+	flow.left = roi.x < 0 ? -roi.x : 0;
+	flow.right = roi.x + roi.width > img.size().width ? roi.x + roi.width - img.size().width : 0;
 
-	dlog("overflows - top:%d, buttom:%d, left:%d, right:%d", overflow_top, overflow_bottom, overflow_left, overflow_right);
+	dlog("overflows - top:%d, buttom:%d, left:%d, right:%d", flow.top, flow.bottom, flow.left, flow.right);
 
-	roi.x += overflow_left;
-	roi.y += overflow_top;
-	roi.width -= overflow_right + overflow_left;
-	roi.height -= overflow_bottom + overflow_top;
+	roi.x += flow.left;
+	roi.y += flow.top;
+	roi.width -= flow.right + flow.left;
+	roi.height -= flow.bottom + flow.top;
 
 	dlog("roi - x:%d, y:%d, width:%d, height:%d", roi.x, roi.y, roi.width, roi.height);
 
@@ -41,7 +50,7 @@ crop (cv::Mat img, cv::Rect roi, int x, int y, int z)
 	cvtColor(crop, crop, cv::COLOR_RGB2RGBA);
 
 	// Put the cropped image onto the background
-	cv::Rect overflow(overflow_left, overflow_top, crop.size().width, crop.size().height);
+	cv::Rect overflow(flow.left, flow.top, crop.size().width, crop.size().height);
 	crop.copyTo(background(overflow));
 
 	// Ensure that folder exist
