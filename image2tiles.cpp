@@ -1,18 +1,23 @@
 #include <stdio.h>
-//#include <sys/stat.h>
 #include <experimental/filesystem>
 
 #include <opencv2/opencv.hpp>
 
-int DEBUG = 0;
+int DEBUG = 1;
+
+#define dlog(fmt, ...) \
+	if (DEBUG) \
+		printf("%s - " fmt "\n", __func__, ##__VA_ARGS__); \
+
+#define log(fmt, ...) \
+	printf(fmt "\n", ##__VA_ARGS__); \
 
 void
 crop (cv::Mat img, cv::Rect roi, int x, int y, int z)
 {
 	static int i = 0;
 
-	if (DEBUG)
-	printf("Crop x:%d, y:%d ...\n", x, y);
+	dlog("Crop x:%d, y:%d ...", x, y);
 
 	cv::Mat background(roi.width, roi.height, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 
@@ -21,21 +26,19 @@ crop (cv::Mat img, cv::Rect roi, int x, int y, int z)
 	int overflow_left = roi.x < 0 ? -roi.x : 0;
 	int overflow_right = roi.x + roi.width > img.size().width ? roi.x + roi.width - img.size().width : 0;
 
-	if (DEBUG)
-	printf("    overflows - top:%d, buttom:%d, left:%d, right:%d\n", overflow_top, overflow_bottom, overflow_left, overflow_right);
+	dlog("overflows - top:%d, buttom:%d, left:%d, right:%d", overflow_top, overflow_bottom, overflow_left, overflow_right);
 
 	roi.x += overflow_left;
 	roi.y += overflow_top;
 	roi.width -= overflow_right + overflow_left;
 	roi.height -= overflow_bottom + overflow_top;
 
-	if (DEBUG)
-	printf("    roi - x:%d, y:%d, width:%d, height:%d\n", roi.x, roi.y, roi.width, roi.height);
+	dlog("roi - x:%d, y:%d, width:%d, height:%d", roi.x, roi.y, roi.width, roi.height);
 
 	// Crop the original image to the defined ROI
 	cv::Mat crop = img(roi);
 
-	cv:cvtColor(crop, crop, cv::COLOR_RGB2RGBA);
+	cvtColor(crop, crop, cv::COLOR_RGB2RGBA);
 
 	// Put the cropped image onto the background
 	cv::Rect overflow(overflow_left, overflow_top, crop.size().width, crop.size().height);
@@ -48,8 +51,7 @@ crop (cv::Mat img, cv::Rect roi, int x, int y, int z)
 	// Write final image to disk
 	cv::imwrite(std::to_string(z) + "/" + std::to_string(x) + "/" + std::to_string(y) + ".png", background);
 
-	if (DEBUG)
-	printf("    DONE\n");
+	dlog("DONE");
 
 	i++;
 }
