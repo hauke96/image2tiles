@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html>
+  <head>
+	<meta charset="utf-8">
+    <link rel="stylesheet" href="ol.css" type="text/css">
+    <style>
+      .map {
+        height: 100%;
+        width: 100%;
+      }
+    </style>
+    <script src="ol.js"></script>
+    <title>OpenLayers example</title>
+  </head>
+  <body>
+    <div id="map" class="map"></div>
+    <script type="text/javascript">
+      var map = new ol.Map({
+        target: 'map',
+        layers: [
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              url: 'https://{a-c}.tile.openstreetmap.org/{z}/{x}/{y}.png'
+            })
+          }),
+          new ol.layer.Tile({
+            source: new ol.source.XYZ({
+              url: 'http://localhost:8000/{z}/{x}/{y}.png'
+            }),
+			opacity: 0.5
+          })
+        ],
+        view: new ol.View({
+          center: ol.proj.fromLonLat([-20.05, 64.085]),
+          zoom: 13
+        })
+      });
+    </script>
+  </body>
+</html>
