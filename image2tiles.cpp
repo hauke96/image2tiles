@@ -21,6 +21,28 @@ typedef struct overflow
 } overflow_t;
 
 void
+calc_overflow(cv::Mat img, cv::Rect roi, overflow_t *flow)
+{
+	flow->top = roi.y < 0 ? -roi.y : 0;
+	flow->bottom = roi.y + roi.height > img.size().height ? roi.y + roi.height - img.size().height : 0;
+	flow->left = roi.x < 0 ? -roi.x : 0;
+	flow->right = roi.x + roi.width > img.size().width ? roi.x + roi.width - img.size().width : 0;
+
+	dlog("overflows - top:%d, buttom:%d, left:%d, right:%d", flow.top, flow.bottom, flow.left, flow.right);
+}
+
+void
+crop_roi(cv::Rect roi, overflow_t *flow)
+{
+	roi.x += flow.left;
+	roi.y += flow.top;
+	roi.width -= flow.right + flow.left;
+	roi.height -= flow.bottom + flow.top;
+
+	dlog("roi - x:%d, y:%d, width:%d, height:%d", roi.x, roi.y, roi.width, roi.height);
+}
+
+void
 crop (cv::Mat img, cv::Rect roi, int x, int y, int z)
 {
 	static int i = 0;
@@ -30,19 +52,9 @@ crop (cv::Mat img, cv::Rect roi, int x, int y, int z)
 	cv::Mat background(roi.width, roi.height, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 
 	overflow_t flow;
-	flow.top = roi.y < 0 ? -roi.y : 0;
-	flow.bottom = roi.y + roi.height > img.size().height ? roi.y + roi.height - img.size().height : 0;
-	flow.left = roi.x < 0 ? -roi.x : 0;
-	flow.right = roi.x + roi.width > img.size().width ? roi.x + roi.width - img.size().width : 0;
+	calc_overflow(img, roi, &flow);
 
-	dlog("overflows - top:%d, buttom:%d, left:%d, right:%d", flow.top, flow.bottom, flow.left, flow.right);
-
-	roi.x += flow.left;
-	roi.y += flow.top;
-	roi.width -= flow.right + flow.left;
-	roi.height -= flow.bottom + flow.top;
-
-	dlog("roi - x:%d, y:%d, width:%d, height:%d", roi.x, roi.y, roi.width, roi.height);
+	crop_roi(roi, *flow);
 
 	// Crop the original image to the defined ROI
 	cv::Mat crop = img(roi);
