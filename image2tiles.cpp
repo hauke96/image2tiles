@@ -87,30 +87,40 @@ main ()
 
 	/* Set Region of Interest */
 
-	int offset_x = 45;
-	int offset_y = -195;
+	int zoom_level = 13;
+
+	int output_tile_size = 256;
+
+	int first_tile_x = 45;
+	int first_tile_y = -195;
 
 	cv::Rect roi;
-	roi.x = offset_x;
-	roi.y = offset_y;
+	roi.x = first_tile_x;
+	roi.y = first_tile_y;
 	roi.width = 255;
 	roi.height = 255;
 
-	// TODO Extract values into variables or parse from arguments
-	for (int x = 3638; roi.x <= img.size().width; x++)
+	int start_coord_x = 3638;
+	int start_coord_y = 2178;
+
+	for (int x = start_coord_x; roi.x <= img.size().width; x++)
 	{
-		printf("Cut column Z:%d, X:%d\n", 13, x);
-		for (int y = 2178; roi.y <= img.size().height; y++)
+		printf("Cut column Z:%d, X:%d\n", zoom_level, x);
+
+		for (int y = start_coord_y; roi.y <= img.size().height; y++)
 		{
 			cv::Mat cropped_img(roi.width, roi.height, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 			crop(img, roi, &cropped_img);
-			resize(cropped_img, cropped_img, cv::Size(256, 256), 0, 0, cv::INTER_LINEAR_EXACT);
-			save_image(cropped_img, x, y, 13);
+
+			resize(cropped_img, cropped_img, cv::Size(output_tile_size, output_tile_size), 0, 0, cv::INTER_LINEAR_EXACT);
+
+			save_image(cropped_img, x, y, zoom_level);
+
 			roi.y += roi.height;
 		}
 
 		roi.x += roi.width;
-		roi.y = offset_y;
+		roi.y = first_tile_y;
 	}	
 
 	printf("Done!\n");
