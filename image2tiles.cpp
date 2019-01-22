@@ -104,6 +104,7 @@ main ()
 		{
 			cv::Mat cropped_img(roi.width, roi.height, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 			crop(img, roi, &cropped_img);
+			resize(cropped_img, cropped_img, cv::Size(256, 256), 0, 0, cv::INTER_LINEAR_EXACT);
 			save_image(cropped_img, x, y, 13);
 			roi.y += roi.height;
 		}
