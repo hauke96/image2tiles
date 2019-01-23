@@ -153,12 +153,12 @@ main ()
 		 * shifted to the left. This is only the case when the original tile
 		 * has an odd coordinate.
 		 */
-		if (coord_x % 2 != 0)
+		if (start_coord_x % 2 != 0)
 		{
 			roi.x -= roi.width; 
 			start_coord_x--;
 		}
-		if (coord_y % 2 != 0)
+		if (start_coord_y % 2 != 0)
 		{
 			roi.y -= roi.height; 
 			start_coord_y--;
