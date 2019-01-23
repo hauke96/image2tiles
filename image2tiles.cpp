@@ -22,23 +22,23 @@ typedef struct overflow
 } overflow_t;
 
 void
-calc_overflow(cv::Mat img, cv::Rect roi, overflow_t *flow)
+calc_overflow(cv::Mat img, cv::Rect roi, overflow_t *roi_overflow_px)
 {
-	flow->top = roi.y < 0 ? -roi.y : 0;
-	flow->bottom = roi.y + roi.height > img.size().height ? roi.y + roi.height - img.size().height : 0;
-	flow->left = roi.x < 0 ? -roi.x : 0;
-	flow->right = roi.x + roi.width > img.size().width ? roi.x + roi.width - img.size().width : 0;
+	roi_overflow_px->top = roi.y < 0 ? -roi.y : 0;
+	roi_overflow_px->bottom = roi.y + roi.height > img.size().height ? roi.y + roi.height - img.size().height : 0;
+	roi_overflow_px->left = roi.x < 0 ? -roi.x : 0;
+	roi_overflow_px->right = roi.x + roi.width > img.size().width ? roi.x + roi.width - img.size().width : 0;
 
-	dlog("overflows - top:%d, buttom:%d, left:%d, right:%d", flow->top, flow->bottom, flow->left, flow->right);
+	dlog("overflows - top:%d, buttom:%d, left:%d, right:%d", roi_overflow_px->top, roi_overflow_px->bottom, roi_overflow_px->left, roi_overflow_px->right);
 }
 
 void
-crop_roi(cv::Rect *roi, overflow_t *flow)
+crop_roi(cv::Rect *roi, overflow_t *roi_overflow_px)
 {
-	roi->x += flow->left;
-	roi->y += flow->top;
-	roi->width -= flow->right + flow->left;
-	roi->height -= flow->bottom + flow->top;
+	roi->x += roi_overflow_px->left;
+	roi->y += roi_overflow_px->top;
+	roi->width -= roi_overflow_px->right + roi_overflow_px->left;
+	roi->height -= roi_overflow_px->bottom + roi_overflow_px->top;
 
 	dlog("roi - x:%d, y:%d, width:%d, height:%d", roi->x, roi->y, roi->width, roi->height);
 }
@@ -46,10 +46,10 @@ crop_roi(cv::Rect *roi, overflow_t *flow)
 void
 crop (cv::Mat img, cv::Rect roi, cv::Mat *cropped_img)
 {
-	overflow_t flow;
-	calc_overflow(img, roi, &flow);
+	overflow_t roi_overflow_px;
+	calc_overflow(img, roi, &roi_overflow_px);
 
-	crop_roi(&roi, &flow);
+	crop_roi(&roi, &roi_overflow_px);
 
 	// Crop the original image to the defined ROI
 	cv::Mat crop = img(roi);
@@ -57,19 +57,19 @@ crop (cv::Mat img, cv::Rect roi, cv::Mat *cropped_img)
 	cvtColor(crop, crop, cv::COLOR_RGB2RGBA);
 
 	// Put the cropped image onto the background
-	cv::Rect overflow(flow.left, flow.top, crop.size().width, crop.size().height);
+	cv::Rect overflow(roi_overflow_px.left, roi_overflow_px.top, crop.size().width, crop.size().height);
 	crop.copyTo((*cropped_img)(overflow));
 }
 
 void
-save_image(cv::Mat img, int x, int y, int z)
+save_image(cv::Mat img, int x_coord, int y_coord, int z)
 {
 	// Ensure that folder exist
-	std::string folderName = "out/" + std::to_string(z) + "/" + std::to_string(x);
+	std::string folderName = "out/" + std::to_string(z) + "/" + std::to_string(x_coord);
 	std::experimental::filesystem::create_directories(folderName);
 
 	// Write final image to disk
-	cv::imwrite("out/" + std::to_string(z) + "/" + std::to_string(x) + "/" + std::to_string(y) + ".png", img);
+	cv::imwrite("out/" + std::to_string(z) + "/" + std::to_string(x_coord) + "/" + std::to_string(y_coord) + ".png", img);
 }
 
 int
@@ -91,44 +91,44 @@ main ()
 
 	int output_tile_size_px = 256;
 
-	int first_tile_x = 45;
-	int first_tile_y = -195;
+	int first_tile_x_px = 45;
+	int first_tile_y_px = -195;
 
 	cv::Rect roi;
-	roi.x = first_tile_x;
-	roi.y = first_tile_y;
+	roi.x = first_tile_x_px;
+	roi.y = first_tile_y_px;
 	roi.width = 255;
 	roi.height = 255;
 
-	int start_coord_x = 3638;
-	int start_coord_y = 2178;
+	int start_x_coord = 3638;
+	int start_y_coord = 2178;
 
 	for (int z = zoom_level; z >= 0; z--)
 	{
 		dlog("y:%d, y:%d, w:%d, h:%d", roi.x, roi.y, roi.width, roi.height);
-		dlog("Top left tile: https://a.tile.openstreetmap.org/%d/%d/%d.png", z, start_coord_x, start_coord_y);
+		dlog("Top left tile: https://a.tile.openstreetmap.org/%d/%d/%d.png", z, start_x_coord, start_y_coord);
 
-		for (int x = start_coord_x; roi.x <= img.size().width; x++)
+		for (int x_coord = start_x_coord; roi.x <= img.size().width; x_coord++)
 		{
-			printf("Cut column Z:%d, X:%d\n", z, x);
+			printf("Cut column Z:%d, X:%d\n", z, x_coord);
 
-			for (int y = start_coord_y; roi.y <= img.size().height; y++)
+			for (int y_coord = start_y_coord; roi.y <= img.size().height; y_coord++)
 			{
 				cv::Mat cropped_img(roi.width, roi.height, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 				crop(img, roi, &cropped_img);
 
 				resize(cropped_img, cropped_img, cv::Size(output_tile_size_px, output_tile_size_px), 0, 0, cv::INTER_LINEAR_EXACT);
 
-				save_image(cropped_img, x, y, z);
+				save_image(cropped_img, x_coord, y_coord, z);
 
 				roi.y += roi.height;
 			}
 
 			roi.x += roi.width;
-			roi.y = first_tile_y;
+			roi.y = first_tile_y_px;
 		}
 
-		roi.x = first_tile_x;
+		roi.x = first_tile_x_px;
 
 		/*
 		 * When the current coordinate is odd, the corner of the upper (upper
@@ -153,15 +153,15 @@ main ()
 		 * shifted to the left. This is only the case when the original tile
 		 * has an odd coordinate.
 		 */
-		if (start_coord_x % 2 != 0)
+		if (start_x_coord % 2 != 0)
 		{
 			roi.x -= roi.width; 
-			start_coord_x--;
+			start_x_coord--;
 		}
-		if (start_coord_y % 2 != 0)
+		if (start_y_coord % 2 != 0)
 		{
 			roi.y -= roi.height; 
-			start_coord_y--;
+			start_y_coord--;
 		}
 
 		resize(img, img, cv::Size(std::max(1, img.size().width / 2), std::max(1, img.size().height / 2)), 0, 0, cv::INTER_AREA);
@@ -172,12 +172,12 @@ main ()
 		roi.y /= 2;
 
 		// Because the loops are resetting the positions
-		first_tile_x = roi.x;
-		first_tile_y = roi.y;
+		first_tile_x_px = roi.x;
+		first_tile_y_px = roi.y;
 
 		// Actually update the x and y coordinates
-		start_coord_x /= 2;
-		start_coord_y /= 2;
+		start_x_coord /= 2;
+		start_y_coord /= 2;
 	}
 
 	printf("Done!\n");
