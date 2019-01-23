@@ -89,7 +89,7 @@ main ()
 	// Set Region of Interest
 	int zoom_level = 13;
 
-	int output_tile_size = 256;
+	int output_tile_size_px = 256;
 
 	int first_tile_x = 45;
 	int first_tile_y = -195;
@@ -117,7 +117,7 @@ main ()
 				cv::Mat cropped_img(roi.width, roi.height, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 				crop(img, roi, &cropped_img);
 
-				resize(cropped_img, cropped_img, cv::Size(output_tile_size, output_tile_size), 0, 0, cv::INTER_LINEAR_EXACT);
+				resize(cropped_img, cropped_img, cv::Size(output_tile_size_px, output_tile_size_px), 0, 0, cv::INTER_LINEAR_EXACT);
 
 				save_image(cropped_img, x, y, z);
 
