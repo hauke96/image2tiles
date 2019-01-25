@@ -6,11 +6,11 @@
 
 int DEBUG = 1;
 
-#define dlog(fmt, ...) \
+#define DLOG(fmt, ...) \
 	if (DEBUG) \
 		printf("%s - " fmt "\n", __func__, ##__VA_ARGS__); \
 
-#define log(fmt, ...) \
+#define LOG(fmt, ...) \
 	printf(fmt "\n", ##__VA_ARGS__); \
 
 typedef struct overflow
@@ -29,7 +29,7 @@ calc_overflow(cv::Mat img, cv::Rect roi, overflow_t *roi_overflow_px)
 	roi_overflow_px->left = roi.x < 0 ? -roi.x : 0;
 	roi_overflow_px->right = roi.x + roi.width > img.size().width ? roi.x + roi.width - img.size().width : 0;
 
-	dlog("overflows - top:%d, buttom:%d, left:%d, right:%d", roi_overflow_px->top, roi_overflow_px->bottom, roi_overflow_px->left, roi_overflow_px->right);
+	DLOG("overflows - top:%d, buttom:%d, left:%d, right:%d", roi_overflow_px->top, roi_overflow_px->bottom, roi_overflow_px->left, roi_overflow_px->right);
 }
 
 void
@@ -40,7 +40,7 @@ crop_roi(cv::Rect *roi, overflow_t *roi_overflow_px)
 	roi->width -= roi_overflow_px->right + roi_overflow_px->left;
 	roi->height -= roi_overflow_px->bottom + roi_overflow_px->top;
 
-	dlog("roi - x:%d, y:%d, width:%d, height:%d", roi->x, roi->y, roi->width, roi->height);
+	DLOG("roi - x:%d, y:%d, width:%d, height:%d", roi->x, roi->y, roi->width, roi->height);
 }
 
 void
@@ -105,8 +105,8 @@ main ()
 
 	for (int z = zoom_level; z >= 0; z--)
 	{
-		dlog("y:%d, y:%d, w:%d, h:%d", roi.x, roi.y, roi.width, roi.height);
-		dlog("Top left tile: https://a.tile.openstreetmap.org/%d/%d/%d.png", z, start_x_coord, start_y_coord);
+		DLOG("y:%d, y:%d, w:%d, h:%d", roi.x, roi.y, roi.width, roi.height);
+		DLOG("Top left tile: https://a.tile.openstreetmap.org/%d/%d/%d.png", z, start_x_coord, start_y_coord);
 
 		for (int x_coord = start_x_coord; roi.x <= img.size().width; x_coord++)
 		{
