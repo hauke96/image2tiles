@@ -78,18 +78,26 @@ typedef struct
 
 typedef struct settings
 {
+	// Given from user via command line arguments
 	img_point_t p1;
 	img_point_t p2;
-	int tile_size;
-	int zoom_level;
+	int output_tile_size;
 	std::string file;
+	int zoom_level;
+
+	// Calculated based on the arguments above
+	int first_tile_x_px;
+	int first_tile_y_px;
+	int start_x_coord;
+	int start_y_coord;
+	float tile_size_px;
 } settings_t;
 
 void
 parse_args(int argc, char** argv, settings_t *settings)
 {
 	// Default settings
-	settings->tile_size = 256;
+	settings->output_tile_size = 256;
 
 	// Regex for parsing the points
 	std::string float_regex_str = "[+-]?[\\d]*\\.?[\\d]+";
@@ -167,7 +175,7 @@ parse_args(int argc, char** argv, settings_t *settings)
 				break;
 			}
 			case 't':
-				settings->tile_size = atoi(optarg);
+				settings->output_tile_size = atoi(optarg);
 				break;
 			case 'v':
 				VERBOSE = 1;
@@ -179,33 +187,31 @@ parse_args(int argc, char** argv, settings_t *settings)
 			case 'f':
 				settings->file = optarg;
 				break;
+			case 'z':
+				settings->zoom_level = atoi(optarg);
+				break;
 		}
 	}
 }
 
-int
-main (int argc, char** argv)
+void
+fill_tile_settings(settings_t *settings)
 {
-	settings_t settings;
-
-	parse_args(argc, argv, &settings);
-
-	int zoom_level = settings.zoom_level;
-	int output_tile_size_px = settings.tile_size;
+	int zoom_level = settings->zoom_level;
 
 	// W/E
-	double p1_long = settings.p1.lon; // 20°0'0"
-	int p1_x = settings.p1.x;
+	double p1_long = settings->p1.lon;
+	int p1_x = settings->p1.x;
 	// N/S
-	double p1_lat = settings.p1.lat; // 64°5'0"
-	int p1_y = settings.p1.y;
+	double p1_lat = settings->p1.lat;
+	int p1_y = settings->p1.y;
 
 	// W/E
-	double p2_long = settings.p2.lon; // 19°0'0"
-	int p2_x = settings.p2.x;
+	double p2_long = settings->p2.lon;
+	int p2_x = settings->p2.x;
 	// N/S
-	double p2_lat = settings.p2.lat; // 63°40'0"
-	int p2_y = settings.p2.y;
+	double p2_lat = settings->p2.lat;
+	int p2_y = settings->p2.y;
 
 	double pixel_per_long = abs(p1_x - p2_x) / abs(p1_long - p2_long);
 	double pixel_per_lat = abs(p1_y - p2_y) / abs(p1_lat - p2_lat);
@@ -213,11 +219,11 @@ main (int argc, char** argv)
 	DLOG("pixel per long: %f", pixel_per_long);
 	DLOG("pixel per lat: %f", pixel_per_lat);
 	
-	double long_per_tile = 360 / pow(2, zoom_level);	
+	double long_per_tile = 360 / pow(2, zoom_level);
 
-	double tile_size_px = pixel_per_long * long_per_tile;
+	settings->tile_size_px = pixel_per_long * long_per_tile;
 
-	DLOG("tile size: %f", tile_size_px);
+	DLOG("tile size: %f", settings->tile_size_px);
 
 	// Determine most upper left given point. This is then used to calculate the tile and image offset within the tile of the origin.
 	int x_px = std::min(p1_x, p2_x);
@@ -251,13 +257,11 @@ main (int argc, char** argv)
 	DLOG("origin_long: %f", origin_long);
 	DLOG("origin_lat: %f", origin_lat);
 
-	//int start_x_coord = 3638;
-	//int start_y_coord = 2178;
-	int start_x_coord = long_to_tile_x(origin_long, zoom_level);
-	int start_y_coord = lat_to_tile_y(origin_lat, zoom_level);
+	settings->start_x_coord = long_to_tile_x(origin_long, zoom_level);
+	settings->start_y_coord = lat_to_tile_y(origin_lat, zoom_level);
 
-	DLOG("tile x: %d", start_x_coord);
-	DLOG("tile y: %d", start_y_coord);
+	DLOG("tile x: %d", settings->start_x_coord);
+	DLOG("tile y: %d", settings->start_y_coord);
 
 	double origin_tile_long = tile_x_to_long(long_to_tile_x(origin_long, zoom_level), zoom_level);
 	double origin_tile_lat =  tile_y_to_lat(lat_to_tile_y(origin_lat, zoom_level), zoom_level);
@@ -265,13 +269,21 @@ main (int argc, char** argv)
 	DLOG("back to long: %f", origin_tile_long);
 	DLOG("back to lat: %f", origin_tile_lat);
 
-	//int first_tile_x_px = 45;
-	//int first_tile_y_px = -195;
-	int first_tile_x_px = (origin_tile_long - origin_long) * pixel_per_long;
-	int first_tile_y_px = (origin_lat - origin_tile_lat) * pixel_per_lat;
+	settings->first_tile_x_px = (origin_tile_long - origin_long) * pixel_per_long;
+	settings->first_tile_y_px = (origin_lat - origin_tile_lat) * pixel_per_lat;
 
-	DLOG("x offset for first tile: %d", first_tile_x_px);
-	DLOG("y offset for first tile: %d", first_tile_y_px);
+	DLOG("x offset for first tile: %d", settings->first_tile_x_px);
+	DLOG("y offset for first tile: %d", settings->first_tile_y_px);
+}
+
+int
+main (int argc, char** argv)
+{
+	settings_t settings;
+
+	parse_args(argc, argv, &settings);
+
+	fill_tile_settings(&settings);
 
 	LOG("Read image ...");
 	cv::Mat img = cv::imread(settings.file, cv::IMREAD_UNCHANGED);
@@ -286,25 +298,25 @@ main (int argc, char** argv)
 
 	// Set Region of Interest
 	cv::Rect roi;
-	roi.x = first_tile_x_px;
-	roi.y = first_tile_y_px;
-	roi.width = tile_size_px;
-	roi.height = tile_size_px;
+	roi.x = settings.first_tile_x_px;
+	roi.y = settings.first_tile_y_px;
+	roi.width = settings.tile_size_px;
+	roi.height = settings.tile_size_px;
 
-	for (int z = zoom_level; z >= 0; z--)
+	for (int z = settings.zoom_level; z >= 0; z--)
 	{
 		DLOG("y:%d, y:%d, w:%d, h:%d", roi.x, roi.y, roi.width, roi.height);
 
-		for (int x_coord = start_x_coord; roi.x <= img.size().width; x_coord++)
+		for (int x_coord = settings.start_x_coord; roi.x <= img.size().width; x_coord++)
 		{
 			VLOG("Cut column Z:%d, X:%d", z, x_coord);
 
-			for (int y_coord = start_y_coord; roi.y <= img.size().height; y_coord++)
+			for (int y_coord = settings.start_y_coord; roi.y <= img.size().height; y_coord++)
 			{
 				cv::Mat cropped_img(roi.width, roi.height, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 				crop(img, roi, &cropped_img);
 
-				resize(cropped_img, cropped_img, cv::Size(output_tile_size_px, output_tile_size_px), 0, 0, cv::INTER_LINEAR_EXACT);
+				resize(cropped_img, cropped_img, cv::Size(settings.output_tile_size, settings.output_tile_size), 0, 0, cv::INTER_LINEAR_EXACT);
 
 				save_image(cropped_img, x_coord, y_coord, z);
 
@@ -312,10 +324,10 @@ main (int argc, char** argv)
 			}
 
 			roi.x += roi.width;
-			roi.y = first_tile_y_px;
+			roi.y = settings.first_tile_y_px;
 		}
 
-		roi.x = first_tile_x_px;
+		roi.x = settings.first_tile_x_px;
 
 		/*
 		 * When the current coordinate is odd, the corner of the upper (upper
@@ -340,15 +352,15 @@ main (int argc, char** argv)
 		 * shifted to the left. This is only the case when the original tile
 		 * has an odd coordinate.
 		 */
-		if (start_x_coord % 2 != 0)
+		if (settings.start_x_coord % 2 != 0)
 		{
 			roi.x -= roi.width; 
-			start_x_coord--;
+			settings.start_x_coord--;
 		}
-		if (start_y_coord % 2 != 0)
+		if (settings.start_y_coord % 2 != 0)
 		{
 			roi.y -= roi.height; 
-			start_y_coord--;
+			settings.start_y_coord--;
 		}
 
 		resize(img, img, cv::Size(std::max(1, img.size().width / 2), std::max(1, img.size().height / 2)), 0, 0, cv::INTER_AREA);
@@ -359,12 +371,12 @@ main (int argc, char** argv)
 		roi.y /= 2;
 
 		// Because the loops are resetting the positions
-		first_tile_x_px = roi.x;
-		first_tile_y_px = roi.y;
+		settings.first_tile_x_px = roi.x;
+		settings.first_tile_y_px = roi.y;
 
 		// Actually update the x and y coordinates
-		start_x_coord /= 2;
-		start_y_coord /= 2;
+		settings.start_x_coord /= 2;
+		settings.start_y_coord /= 2;
 	}
 
 	LOG("Done!");
