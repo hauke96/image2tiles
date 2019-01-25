@@ -83,6 +83,7 @@ typedef struct settings
 	img_point_t p2;
 	int output_tile_size;
 	std::string file;
+	std::string output_folder;
 	int zoom_level;
 
 	// Calculated based on the arguments above
@@ -98,6 +99,7 @@ parse_args(int argc, char** argv, settings_t *settings)
 {
 	// Default settings
 	settings->output_tile_size = 256;
+	settings->output_folder = "./out";
 
 	// Regex for parsing the points
 	std::string float_regex_str = "[+-]?[\\d]*\\.?[\\d]+";
@@ -111,6 +113,7 @@ parse_args(int argc, char** argv, settings_t *settings)
 		{"p1",         required_argument, 0, '1' },
 		{"p2",         required_argument, 0, '2' },
 		{"file",       required_argument, 0, 'f' },
+		{"output",     required_argument, 0, 'o' },
 		{"verbose",    no_argument,       0, 'v' },
 		{"version",    no_argument,       0,  0  },
 		{"debug",      no_argument,       0, 'd' },
@@ -120,7 +123,7 @@ parse_args(int argc, char** argv, settings_t *settings)
 	while (1)
 	{
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "vdf:z:1:2:t:",
+		int c = getopt_long(argc, argv, "vdo:f:z:1:2:t:",
 			long_options, &option_index);
 		if (c == -1)
 		{
@@ -169,6 +172,8 @@ parse_args(int argc, char** argv, settings_t *settings)
 				else
 				{
 					ELOG("Cannot parse point '%s'", optarg);
+					LOG("A correct point option would be: --p1=1,-23,45,+6.78");
+					LOG("(The + is optional and make sure there are no spaces)");
 					exit(EINVAL);
 				}
 
@@ -187,9 +192,15 @@ parse_args(int argc, char** argv, settings_t *settings)
 			case 'f':
 				settings->file = optarg;
 				break;
+			case 'o':
+				settings->output_folder = optarg;
+				break;
 			case 'z':
 				settings->zoom_level = atoi(optarg);
 				break;
+			case '?':
+				ELOG("Unrecognized option '%s'", optarg);
+				exit(EINVAL);
 		}
 	}
 }
