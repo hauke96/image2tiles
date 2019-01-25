@@ -293,7 +293,7 @@ main (int argc, char** argv)
 	DLOG("y offset for first tile: %d", first_tile_y_px);
 
 	LOG("Read image ...");
-	cv::Mat img = cv::imread("img.jpg", cv::IMREAD_UNCHANGED);
+	cv::Mat img = cv::imread(settings.file, cv::IMREAD_UNCHANGED);
 
 	if (img.empty())
 	{
