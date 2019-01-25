@@ -1,18 +1,31 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
 #include <experimental/filesystem>
+#include <regex>
 
 #include <opencv2/opencv.hpp>
 
 #include "math.cpp"
 
-int DEBUG = 1;
+int DEBUG = 0;
+int VERBOSE = 0;
+
+#define VERSION "v0.1.0"
 
 #define DLOG(fmt, ...) \
 	if (DEBUG) \
 		printf("%s - " fmt "\n", __func__, ##__VA_ARGS__); \
 
+#define VLOG(fmt, ...) \
+	if (VERBOSE) \
+		printf(fmt "\n", ##__VA_ARGS__); \
+
 #define LOG(fmt, ...) \
 	printf(fmt "\n", ##__VA_ARGS__); \
+
+#define ELOG(fmt, ...) \
+	fprintf(stderr, fmt "\n", ##__VA_ARGS__); \
 
 typedef struct overflow
 {
@@ -73,37 +86,157 @@ save_image(cv::Mat img, int x_coord, int y_coord, int z)
 	cv::imwrite("out/" + std::to_string(z) + "/" + std::to_string(x_coord) + "/" + std::to_string(y_coord) + ".png", img);
 }
 
-int
-main ()
+typedef struct
 {
-	int zoom_level = 13;
-	int output_tile_size_px = 256;
+	int x;
+	int y;
+	double lon;
+	double lat;
+} img_point_t;
+
+typedef struct settings
+{
+	img_point_t p1;
+	img_point_t p2;
+	int tile_size;
+	int zoom_level;
+	std::string file;
+} settings_t;
+
+void
+parse_args(int argc, char** argv, settings_t *settings)
+{
+	// Default settings
+	settings->tile_size = 256;
+	settings->zoom_level = 13; // TODO remove and use value from params
+
+	// Regex for parsing the points
+	std::string float_regex_str = "[+-]?[\\d]*\\.?[\\d]+";
+	std::string int_regex_str = "[-+]?\\d+";
+	// For example: --p1=100,20.123,100,64.123
+	std::regex point_regex("(" + int_regex_str + "),(" + float_regex_str + "),(" + int_regex_str + "),(" + float_regex_str + ")");
+
+	static struct option long_options[] = {
+		{"zoom-level", required_argument, 0, 'z' },
+		{"tile-size",  required_argument, 0, 't' },
+		{"p1",         required_argument, 0, '1' },
+		{"p2",         required_argument, 0, '2' },
+		{"file",       required_argument, 0, 'f' },
+		{"verbose",    no_argument,       0, 'v' },
+		{"version",    no_argument,       0,  0  },
+		{"debug",      no_argument,       0, 'd' },
+		{0,            0,                 0,  0  }
+	};
+	
+	while (1)
+	{
+		int option_index = 0;
+		int c = getopt_long(argc, argv, "vdf:z:1:2:t:",
+			long_options, &option_index);
+		if (c == -1)
+		{
+			break;
+		}
+
+		switch (c)
+		{
+			case 0:
+			{
+				std::string opt = long_options[option_index].name;
+
+				if (opt == "version")
+				{
+					LOG(VERSION);
+					exit(0);
+				}
+
+				break;
+			}
+			case '1': // fall through
+			case '2':
+			{
+				std::smatch matches;
+				std::string arg_str(optarg);
+				if (std::regex_search(arg_str, matches, point_regex))
+				{
+					img_point_t *p;
+					if (c == '1')
+					{
+						p = &settings->p1;
+					}
+					else
+					{
+						p = &settings->p2;
+					}
+					p->x = atoi(matches.str(1).c_str());
+					p->lon = std::stof(matches.str(2).c_str());
+					p->y = atoi(matches.str(3).c_str());
+					p->lat = std::stof(matches.str(4).c_str());
+					DLOG("> %d", p->x);
+					DLOG("> %f", p->lon);
+					DLOG("> %d", p->y);
+					DLOG("> %f", p->lat);
+				}
+				else
+				{
+					ELOG("Cannot parse point '%s'", optarg);
+					exit(EINVAL);
+				}
+
+				break;
+			}
+			case 't':
+				settings->tile_size = atoi(optarg);
+				break;
+			case 'v':
+				VERBOSE = 1;
+				break;
+			case 'd':
+				DEBUG = 1;
+				VERBOSE = 1;
+				break;
+			case 'f':
+				settings->file = optarg;
+				break;
+		}
+	}
+}
+
+int
+main (int argc, char** argv)
+{
+	settings_t settings;
+
+	parse_args(argc, argv, &settings);
+
+	int zoom_level = settings.zoom_level;
+	int output_tile_size_px = settings.tile_size;
 
 	// W/E
-	double p1_long = -20.0; // 20°0'0"
-	int p1_x = 788;
+	double p1_long = settings.p1.lon; // 20°0'0"
+	int p1_x = settings.p1.x;
 	// N/S
-	double p1_lat = 64.08333333; // 64°5'0"
-	int p1_y = 418 * sgn(p1_lat);
+	double p1_lat = settings.p1.lat; // 64°5'0"
+	int p1_y = settings.p1.y;
 
 	// W/E
-	double p2_long = -19.0; // 19°0'0"
-	int p2_x = 6580;
+	double p2_long = settings.p2.lon; // 19°0'0"
+	int p2_x = settings.p2.x;
 	// N/S
-	double p2_lat = 63.6666666; // 63°40'0"
-	int p2_y = 5904 * sgn(p2_lat);
+	double p2_lat = settings.p2.lat; // 63°40'0"
+	int p2_y = settings.p2.y;
 
 	double pixel_per_long = abs(p1_x - p2_x) / abs(p1_long - p2_long);
 	double pixel_per_lat = abs(p1_y - p2_y) / abs(p1_lat - p2_lat);
 
-	LOG("pixel per long: %f", pixel_per_long);
-	LOG("pixel per lat: %f", pixel_per_lat);
+	DLOG("pixel per long: %f", pixel_per_long);
+	DLOG("pixel per lat: %f", pixel_per_lat);
 	
 	double long_per_tile = 360 / pow(2, zoom_level);	
 
 	double tile_size_px = pixel_per_long * long_per_tile;
 
-	LOG("tile size: %f", tile_size_px);
+	DLOG("tile size: %f", tile_size_px);
 
 	// Determine most upper left given point. This is then used to calculate the tile and image offset within the tile of the origin.
 	int x_px = std::min(p1_x, p2_x);
@@ -131,44 +264,44 @@ main ()
 	double origin_long =  x_long - x_px / pixel_per_long;
 	double origin_lat =  y_lat + y_px / pixel_per_lat;
 
-	LOG("x_long: %f", x_long);
-	LOG("y_lat: %f", y_lat);
+	DLOG("x_long: %f", x_long);
+	DLOG("y_lat: %f", y_lat);
 
-	LOG("origin_long: %f", origin_long);
-	LOG("origin_lat: %f", origin_lat);
+	DLOG("origin_long: %f", origin_long);
+	DLOG("origin_lat: %f", origin_lat);
 
 	//int start_x_coord = 3638;
 	//int start_y_coord = 2178;
 	int start_x_coord = long_to_tile_x(origin_long, zoom_level);
 	int start_y_coord = lat_to_tile_y(origin_lat, zoom_level);
 
-	LOG("tile x: %d", start_x_coord);
-	LOG("tile y: %d", start_y_coord);
+	DLOG("tile x: %d", start_x_coord);
+	DLOG("tile y: %d", start_y_coord);
 
 	double origin_tile_long = tile_x_to_long(long_to_tile_x(origin_long, zoom_level), zoom_level);
 	double origin_tile_lat =  tile_y_to_lat(lat_to_tile_y(origin_lat, zoom_level), zoom_level);
 
-	LOG("back to long: %f", origin_tile_long);
-	LOG("back to lat: %f", origin_tile_lat);
+	DLOG("back to long: %f", origin_tile_long);
+	DLOG("back to lat: %f", origin_tile_lat);
 
 	//int first_tile_x_px = 45;
 	//int first_tile_y_px = -195;
 	int first_tile_x_px = (origin_tile_long - origin_long) * pixel_per_long;
 	int first_tile_y_px = (origin_lat - origin_tile_lat) * pixel_per_lat;
 
-	LOG("x offset for first tile: %d", first_tile_x_px);
-	LOG("y offset for first tile: %d", first_tile_y_px);
+	DLOG("x offset for first tile: %d", first_tile_x_px);
+	DLOG("y offset for first tile: %d", first_tile_y_px);
 
-	printf("Read image ...\n");
+	LOG("Read image ...");
 	cv::Mat img = cv::imread("img.jpg", cv::IMREAD_UNCHANGED);
 
 	if (img.empty())
 	{
-	    std::cout << "!!! imread() failed to open target image" << std::endl;
-	    return -1;        
+		ELOG("Could not open image '%s'", settings.file.c_str());
+	    return EIO;
 	}
 
-	printf("Start cuttig it ...\n");
+	LOG("Start cuttig image ...");
 
 	// Set Region of Interest
 	cv::Rect roi;
@@ -180,11 +313,10 @@ main ()
 	for (int z = zoom_level; z >= 0; z--)
 	{
 		DLOG("y:%d, y:%d, w:%d, h:%d", roi.x, roi.y, roi.width, roi.height);
-		DLOG("Top left tile: https://a.tile.openstreetmap.org/%d/%d/%d.png", z, start_x_coord, start_y_coord);
 
 		for (int x_coord = start_x_coord; roi.x <= img.size().width; x_coord++)
 		{
-			printf("Cut column Z:%d, X:%d\n", z, x_coord);
+			VLOG("Cut column Z:%d, X:%d", z, x_coord);
 
 			for (int y_coord = start_y_coord; roi.y <= img.size().height; y_coord++)
 			{
@@ -254,7 +386,7 @@ main ()
 		start_y_coord /= 2;
 	}
 
-	printf("Done!\n");
+	LOG("Done!");
 
 	return 0;
 }
