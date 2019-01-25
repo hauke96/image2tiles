@@ -8,14 +8,24 @@
 
 #include "math.cpp"
 
-int DEBUG = 1;
+int DEBUG = 0;
+int VERBOSE = 0;
+
+#define VERSION "v0.1.0"
 
 #define DLOG(fmt, ...) \
 	if (DEBUG) \
 		printf("%s - " fmt "\n", __func__, ##__VA_ARGS__); \
 
+#define VLOG(fmt, ...) \
+	if (VERBOSE) \
+		printf(fmt "\n", ##__VA_ARGS__); \
+
 #define LOG(fmt, ...) \
 	printf(fmt "\n", ##__VA_ARGS__); \
+
+#define ELOG(fmt, ...) \
+	fprintf(stderr, fmt "\n", ##__VA_ARGS__); \
 
 typedef struct overflow
 {
@@ -212,14 +222,14 @@ main (int argc, char** argv)
 	double pixel_per_long = abs(p1_x - p2_x) / abs(p1_long - p2_long);
 	double pixel_per_lat = abs(p1_y - p2_y) / abs(p1_lat - p2_lat);
 
-	LOG("pixel per long: %f", pixel_per_long);
-	LOG("pixel per lat: %f", pixel_per_lat);
+	DLOG("pixel per long: %f", pixel_per_long);
+	DLOG("pixel per lat: %f", pixel_per_lat);
 	
 	double long_per_tile = 360 / pow(2, zoom_level);	
 
 	double tile_size_px = pixel_per_long * long_per_tile;
 
-	LOG("tile size: %f", tile_size_px);
+	DLOG("tile size: %f", tile_size_px);
 
 	// Determine most upper left given point. This is then used to calculate the tile and image offset within the tile of the origin.
 	int x_px = std::min(p1_x, p2_x);
@@ -247,44 +257,44 @@ main (int argc, char** argv)
 	double origin_long =  x_long - x_px / pixel_per_long;
 	double origin_lat =  y_lat + y_px / pixel_per_lat;
 
-	LOG("x_long: %f", x_long);
-	LOG("y_lat: %f", y_lat);
+	DLOG("x_long: %f", x_long);
+	DLOG("y_lat: %f", y_lat);
 
-	LOG("origin_long: %f", origin_long);
-	LOG("origin_lat: %f", origin_lat);
+	DLOG("origin_long: %f", origin_long);
+	DLOG("origin_lat: %f", origin_lat);
 
 	//int start_x_coord = 3638;
 	//int start_y_coord = 2178;
 	int start_x_coord = long_to_tile_x(origin_long, zoom_level);
 	int start_y_coord = lat_to_tile_y(origin_lat, zoom_level);
 
-	LOG("tile x: %d", start_x_coord);
-	LOG("tile y: %d", start_y_coord);
+	DLOG("tile x: %d", start_x_coord);
+	DLOG("tile y: %d", start_y_coord);
 
 	double origin_tile_long = tile_x_to_long(long_to_tile_x(origin_long, zoom_level), zoom_level);
 	double origin_tile_lat =  tile_y_to_lat(lat_to_tile_y(origin_lat, zoom_level), zoom_level);
 
-	LOG("back to long: %f", origin_tile_long);
-	LOG("back to lat: %f", origin_tile_lat);
+	DLOG("back to long: %f", origin_tile_long);
+	DLOG("back to lat: %f", origin_tile_lat);
 
 	//int first_tile_x_px = 45;
 	//int first_tile_y_px = -195;
 	int first_tile_x_px = (origin_tile_long - origin_long) * pixel_per_long;
 	int first_tile_y_px = (origin_lat - origin_tile_lat) * pixel_per_lat;
 
-	LOG("x offset for first tile: %d", first_tile_x_px);
-	LOG("y offset for first tile: %d", first_tile_y_px);
+	DLOG("x offset for first tile: %d", first_tile_x_px);
+	DLOG("y offset for first tile: %d", first_tile_y_px);
 
-	printf("Read image ...\n");
+	LOG("Read image ...");
 	cv::Mat img = cv::imread("img.jpg", cv::IMREAD_UNCHANGED);
 
 	if (img.empty())
 	{
-	    std::cout << "!!! imread() failed to open target image" << std::endl;
-	    return -1;        
+		ELOG("Could not open image '%s'", settings.file.c_str());
+	    return EIO;
 	}
 
-	printf("Start cuttig it ...\n");
+	LOG("Start cuttig image ...");
 
 	// Set Region of Interest
 	cv::Rect roi;
@@ -296,11 +306,10 @@ main (int argc, char** argv)
 	for (int z = zoom_level; z >= 0; z--)
 	{
 		DLOG("y:%d, y:%d, w:%d, h:%d", roi.x, roi.y, roi.width, roi.height);
-		DLOG("Top left tile: https://a.tile.openstreetmap.org/%d/%d/%d.png", z, start_x_coord, start_y_coord);
 
 		for (int x_coord = start_x_coord; roi.x <= img.size().width; x_coord++)
 		{
-			printf("Cut column Z:%d, X:%d\n", z, x_coord);
+			VLOG("Cut column Z:%d, X:%d", z, x_coord);
 
 			for (int y_coord = start_y_coord; roi.y <= img.size().height; y_coord++)
 			{
@@ -370,7 +379,7 @@ main (int argc, char** argv)
 		start_y_coord /= 2;
 	}
 
-	printf("Done!\n");
+	LOG("Done!");
 
 	return 0;
 }
