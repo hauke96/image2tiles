@@ -3,8 +3,9 @@ CXX = g++
 
 # compiler flags:
 CXXFLAGS = -std=c++17 -g -Wall
-OPENCV   = -I/usr/include/opencv4/opencv2 -lopencv_core -lopencv_imgcodecs -lopencv_imgproc
-LDFLAGS  = -lm -lstdc++fs $(OPENCV)
+INC_DIR = -I/usr/include/opencv4/opencv2
+OPENCV   = -lopencv_core -lopencv_imgcodecs -lopencv_imgproc
+LDFLAGS  = -lm -lstdc++fs $(INC_DIR) $(OPENCV)
 
 TARGET = image2tiles
 
