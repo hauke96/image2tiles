@@ -1,8 +1,9 @@
 #include <stdio.h>
-#include <algorithm>
 #include <experimental/filesystem>
 
 #include <opencv2/opencv.hpp>
+
+#include "math.cpp"
 
 int DEBUG = 1;
 
@@ -70,58 +71,6 @@ save_image(cv::Mat img, int x_coord, int y_coord, int z)
 
 	// Write final image to disk
 	cv::imwrite("out/" + std::to_string(z) + "/" + std::to_string(x_coord) + "/" + std::to_string(y_coord) + ".png", img);
-}
-
-double
-dcos(double number)
-{
-	return cos(number * M_PI / 180.0);
-}
-
-double
-dtan(double number)
-{
-	return tan(number * M_PI / 180.0);
-}
-
-int
-long_to_tile_x(double lon, int z)
-{
-	return (int)(floor((lon + 180.0) / 360.0 * pow(2.0, z)));
-}
-
-int
-lat_to_tile_y(double lat, int z)
-{
-	return (int)(floor((1.0 - log(dtan(lat) + 1.0 / dcos(lat)) / M_PI) / 2.0 * pow(2.0, z)));
-}
-
-double
-tile_x_to_long(int x, int z)
-{
-	return x / pow(2, z) * 360.0 - 180;
-}
-
-double
-tile_y_to_lat(int y, int z)
-{
-	double n = M_PI - 2.0 * M_PI * y / pow(2.0, z);
-	return 180.0 / M_PI * atan(0.5  * (exp(n) - exp(-n)));
-}
-
-int
-sgn(double n)
-{
-	if (n == 0)
-	{
-		return 0;
-	}
-	else if (n > 0)
-	{
-		return 1;
-	}
-	
-	return -1;
 }
 
 int
