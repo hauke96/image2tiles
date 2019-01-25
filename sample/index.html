@@ -25,14 +25,14 @@
           }),
           new ol.layer.Tile({
             source: new ol.source.XYZ({
-              url: 'http://localhost:8000/{z}/{x}/{y}.png'
+              url: 'http://localhost:8000/out/{z}/{x}/{y}.png'
             }),
 			opacity: 0.5
           })
         ],
         view: new ol.View({
-          center: ol.proj.fromLonLat([-20.05, 64.085]),
-          zoom: 13
+          center: ol.proj.fromLonLat([-19.0407, 64.0055]),
+          zoom: 12
         })
       });
     </script>
