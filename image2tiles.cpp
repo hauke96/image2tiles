@@ -94,12 +94,13 @@ typedef struct
 	double lat;
 } img_point_t;
 
-typedef struct
+typedef struct settings
 {
 	img_point_t p1;
 	img_point_t p2;
 	int tile_size;
 	int zoom_level;
+	std::string file;
 } settings_t;
 
 void
@@ -121,15 +122,16 @@ parse_args(int argc, char** argv, settings_t *settings)
 		{"p1",         required_argument, 0, '1' },
 		{"p2",         required_argument, 0, '2' },
 		{"file",       required_argument, 0, 'f' },
-		{"verbose",    no_argument,       0,  0  },
-		{"version",    no_argument,       0, 'v' },
+		{"verbose",    no_argument,       0, 'v' },
+		{"version",    no_argument,       0,  0  },
+		{"debug",      no_argument,       0, 'd' },
 		{0,            0,                 0,  0  }
 	};
 	
 	while (1)
 	{
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "vdf:z:1:2:",
+		int c = getopt_long(argc, argv, "vdf:z:1:2:t:",
 			long_options, &option_index);
 		if (c == -1)
 		{
@@ -139,13 +141,17 @@ parse_args(int argc, char** argv, settings_t *settings)
 		switch (c)
 		{
 			case 0:
-				printf("option %s", long_options[option_index].name);
-				if (optarg)
+			{
+				std::string opt = long_options[option_index].name;
+
+				if (opt == "version")
 				{
-					printf(" with arg %s", optarg);
+					LOG(VERSION);
+					exit(0);
 				}
-				printf("\n");
+
 				break;
+			}
 			case '1': // fall through
 			case '2':
 			{
@@ -173,23 +179,24 @@ parse_args(int argc, char** argv, settings_t *settings)
 				}
 				else
 				{
-					LOG("Cannot parse point '%s'", optarg);
-					exit(1);
+					ELOG("Cannot parse point '%s'", optarg);
+					exit(EINVAL);
 				}
 
 				break;
 			}
 			case 't':
-				// TODO
+				settings->tile_size = atoi(optarg);
 				break;
 			case 'v':
-				// TODO
+				VERBOSE = 1;
 				break;
 			case 'd':
 				DEBUG = 1;
+				VERBOSE = 1;
 				break;
 			case 'f':
-				// TODO
+				settings->file = optarg;
 				break;
 		}
 	}
