@@ -72,9 +72,144 @@ save_image(cv::Mat img, int x_coord, int y_coord, int z)
 	cv::imwrite("out/" + std::to_string(z) + "/" + std::to_string(x_coord) + "/" + std::to_string(y_coord) + ".png", img);
 }
 
+double
+dcos(double number)
+{
+	return cos(number * M_PI / 180.0);
+}
+
+double
+dtan(double number)
+{
+	return tan(number * M_PI / 180.0);
+}
+
+int
+long_to_tile_x(double lon, int z)
+{
+	return (int)(floor((lon + 180.0) / 360.0 * pow(2.0, z)));
+}
+
+int
+lat_to_tile_y(double lat, int z)
+{
+	return (int)(floor((1.0 - log(dtan(lat) + 1.0 / dcos(lat)) / M_PI) / 2.0 * pow(2.0, z)));
+}
+
+double
+tile_x_to_long(int x, int z)
+{
+	return x / pow(2, z) * 360.0 - 180;
+}
+
+double
+tile_y_to_lat(int y, int z)
+{
+	double n = M_PI - 2.0 * M_PI * y / pow(2.0, z);
+	return 180.0 / M_PI * atan(0.5  * (exp(n) - exp(-n)));
+}
+
+int
+sgn(double n)
+{
+	if (n == 0)
+	{
+		return 0;
+	}
+	else if (n > 0)
+	{
+		return 1;
+	}
+	
+	return -1;
+}
+
 int
 main ()
 {
+	int zoom_level = 13;
+	int output_tile_size_px = 256;
+
+	// W/E
+	double p1_long = -20.0; // 20°0'0"
+	int p1_x = 788;
+	// N/S
+	double p1_lat = 64.08333333; // 64°5'0"
+	int p1_y = 418 * sgn(p1_lat);
+
+	// W/E
+	double p2_long = -19.0; // 19°0'0"
+	int p2_x = 6580;
+	// N/S
+	double p2_lat = 63.6666666; // 63°40'0"
+	int p2_y = 5904 * sgn(p2_lat);
+
+	double pixel_per_long = abs(p1_x - p2_x) / abs(p1_long - p2_long);
+	double pixel_per_lat = abs(p1_y - p2_y) / abs(p1_lat - p2_lat);
+
+	LOG("pixel per long: %f", pixel_per_long);
+	LOG("pixel per lat: %f", pixel_per_lat);
+	
+	double long_per_tile = 360 / pow(2, zoom_level);	
+
+	double tile_size_px = pixel_per_long * long_per_tile;
+
+	LOG("tile size: %f", tile_size_px);
+
+	// Determine most upper left given point. This is then used to calculate the tile and image offset within the tile of the origin.
+	int x_px = std::min(p1_x, p2_x);
+	double x_long;
+	if (x_px == p1_x)
+	{
+		x_long = p1_long;
+	}
+	else
+	{
+		x_long = p2_long;
+	}
+
+	int y_px = std::min(p1_y, p2_y);
+	double y_lat;
+	if (y_px == p1_y)
+	{
+		y_lat = p1_lat;
+	}
+	else
+	{
+		y_lat = p2_lat;
+	}
+
+	double origin_long =  x_long - x_px / pixel_per_long;
+	double origin_lat =  y_lat + y_px / pixel_per_lat;
+
+	LOG("x_long: %f", x_long);
+	LOG("y_lat: %f", y_lat);
+
+	LOG("origin_long: %f", origin_long);
+	LOG("origin_lat: %f", origin_lat);
+
+	//int start_x_coord = 3638;
+	//int start_y_coord = 2178;
+	int start_x_coord = long_to_tile_x(origin_long, zoom_level);
+	int start_y_coord = lat_to_tile_y(origin_lat, zoom_level);
+
+	LOG("tile x: %d", start_x_coord);
+	LOG("tile y: %d", start_y_coord);
+
+	double origin_tile_long = tile_x_to_long(long_to_tile_x(origin_long, zoom_level), zoom_level);
+	double origin_tile_lat =  tile_y_to_lat(lat_to_tile_y(origin_lat, zoom_level), zoom_level);
+
+	LOG("back to long: %f", origin_tile_long);
+	LOG("back to lat: %f", origin_tile_lat);
+
+	//int first_tile_x_px = 45;
+	//int first_tile_y_px = -195;
+	int first_tile_x_px = (origin_tile_long - origin_long) * pixel_per_long;
+	int first_tile_y_px = (origin_lat - origin_tile_lat) * pixel_per_lat;
+
+	LOG("x offset for first tile: %d", first_tile_x_px);
+	LOG("y offset for first tile: %d", first_tile_y_px);
+
 	printf("Read image ...\n");
 	cv::Mat img = cv::imread("img.jpg", cv::IMREAD_UNCHANGED);
 
@@ -87,21 +222,11 @@ main ()
 	printf("Start cuttig it ...\n");
 
 	// Set Region of Interest
-	int zoom_level = 13;
-
-	int output_tile_size_px = 256;
-
-	int first_tile_x_px = 45;
-	int first_tile_y_px = -195;
-
 	cv::Rect roi;
 	roi.x = first_tile_x_px;
 	roi.y = first_tile_y_px;
-	roi.width = 255;
-	roi.height = 255;
-
-	int start_x_coord = 3638;
-	int start_y_coord = 2178;
+	roi.width = tile_size_px;
+	roi.height = tile_size_px;
 
 	for (int z = zoom_level; z >= 0; z--)
 	{
