@@ -1,5 +1,8 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <getopt.h>
 #include <experimental/filesystem>
+#include <regex>
 
 #include <opencv2/opencv.hpp>
 
@@ -73,25 +76,138 @@ save_image(cv::Mat img, int x_coord, int y_coord, int z)
 	cv::imwrite("out/" + std::to_string(z) + "/" + std::to_string(x_coord) + "/" + std::to_string(y_coord) + ".png", img);
 }
 
-int
-main ()
+typedef struct
 {
-	int zoom_level = 13;
-	int output_tile_size_px = 256;
+	int x;
+	int y;
+	double lon;
+	double lat;
+} img_point_t;
+
+typedef struct
+{
+	img_point_t p1;
+	img_point_t p2;
+	int tile_size;
+	int zoom_level;
+} settings_t;
+
+void
+parse_args(int argc, char** argv, settings_t *settings)
+{
+	// Default settings
+	settings->tile_size = 256;
+	settings->zoom_level = 13; // TODO remove and use value from params
+
+	// Regex for parsing the points
+	std::string float_regex_str = "[+-]?[\\d]*\\.?[\\d]+";
+	std::string int_regex_str = "[-+]?\\d+";
+	// For example: --p1=100,20.123,100,64.123
+	std::regex point_regex("(" + int_regex_str + "),(" + float_regex_str + "),(" + int_regex_str + "),(" + float_regex_str + ")");
+
+	static struct option long_options[] = {
+		{"zoom-level", required_argument, 0, 'z' },
+		{"tile-size",  required_argument, 0, 't' },
+		{"p1",         required_argument, 0, '1' },
+		{"p2",         required_argument, 0, '2' },
+		{"file",       required_argument, 0, 'f' },
+		{"verbose",    no_argument,       0,  0  },
+		{"version",    no_argument,       0, 'v' },
+		{0,            0,                 0,  0  }
+	};
+	
+	while (1)
+	{
+		int option_index = 0;
+		int c = getopt_long(argc, argv, "vdf:z:1:2:",
+			long_options, &option_index);
+		if (c == -1)
+		{
+			break;
+		}
+
+		switch (c)
+		{
+			case 0:
+				printf("option %s", long_options[option_index].name);
+				if (optarg)
+				{
+					printf(" with arg %s", optarg);
+				}
+				printf("\n");
+				break;
+			case '1': // fall through
+			case '2':
+			{
+				std::smatch matches;
+				std::string arg_str(optarg);
+				if (std::regex_search(arg_str, matches, point_regex))
+				{
+					img_point_t *p;
+					if (c == '1')
+					{
+						p = &settings->p1;
+					}
+					else
+					{
+						p = &settings->p2;
+					}
+					p->x = atoi(matches.str(1).c_str());
+					p->lon = std::stof(matches.str(2).c_str());
+					p->y = atoi(matches.str(3).c_str());
+					p->lat = std::stof(matches.str(4).c_str());
+					DLOG("> %d", p->x);
+					DLOG("> %f", p->lon);
+					DLOG("> %d", p->y);
+					DLOG("> %f", p->lat);
+				}
+				else
+				{
+					LOG("Cannot parse point '%s'", optarg);
+					exit(1);
+				}
+
+				break;
+			}
+			case 't':
+				// TODO
+				break;
+			case 'v':
+				// TODO
+				break;
+			case 'd':
+				DEBUG = 1;
+				break;
+			case 'f':
+				// TODO
+				break;
+		}
+	}
+}
+
+int
+main (int argc, char** argv)
+{
+	settings_t settings;
+
+	parse_args(argc, argv, &settings);
+
+	int zoom_level = settings.zoom_level;
+	int output_tile_size_px = settings.tile_size;
 
 	// W/E
-	double p1_long = -20.0; // 20°0'0"
-	int p1_x = 788;
+	double p1_long = settings.p1.lon; // 20°0'0"
+	int p1_x = settings.p1.x;
 	// N/S
-	double p1_lat = 64.08333333; // 64°5'0"
-	int p1_y = 418 * sgn(p1_lat);
+	double p1_lat = settings.p1.lat; // 64°5'0"
+	int p1_y = settings.p1.y;
 
 	// W/E
-	double p2_long = -19.0; // 19°0'0"
-	int p2_x = 6580;
+	double p2_long = settings.p2.lon; // 19°0'0"
+	int p2_x = settings.p2.x;
 	// N/S
-	double p2_lat = 63.6666666; // 63°40'0"
-	int p2_y = 5904 * sgn(p2_lat);
+	double p2_lat = settings.p2.lat; // 63°40'0"
+	int p2_y = settings.p2.y;
 
 	double pixel_per_long = abs(p1_x - p2_x) / abs(p1_long - p2_long);
 	double pixel_per_lat = abs(p1_y - p2_y) / abs(p1_lat - p2_lat);
