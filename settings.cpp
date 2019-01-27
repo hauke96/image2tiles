@@ -225,3 +225,25 @@ fill_tile_settings(settings_t *settings)
 	DLOG("y offset for first tile: %d", settings->first_tile_y_px);
 }
 
+int
+verify_settings(settings_t *settings)
+{
+	// Points must not be equal
+	if (settings->p1 == settings->p2)
+	{
+		ELOG("Specified points must be not equal");
+		return 1;
+	}
+
+	// output tile size valid
+
+	// imput file exists
+
+	// output folder valid (writable)
+	
+	// zoom level correct
+
+	// tile size valid
+
+	return 0;
+}

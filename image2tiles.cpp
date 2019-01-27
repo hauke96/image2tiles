@@ -31,6 +31,8 @@ main (int argc, char** argv)
 
 	fill_tile_settings(&settings);
 
+	verify_settings(&settings);
+
 	LOG("Read image ...");
 	cv::Mat img = cv::imread(settings.file, cv::IMREAD_UNCHANGED);
 
