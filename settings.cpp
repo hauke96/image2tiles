@@ -6,6 +6,14 @@ typedef struct
 	double lat;
 } img_point_t;
 
+bool operator==(const img_point_t& a, const img_point_t& b)
+{
+	return (a.x == b.x) &&
+			(a.y == b.y) &&
+			(a.lon == b.lon) &&
+			(a.lat == b.lat);
+}
+
 typedef struct settings
 {
 	// Given from user via command line arguments
