@@ -45,7 +45,7 @@ typedef struct settings
 void
 print_usage()
 {
-	LOG("image2tiles - Cutting an image into OGC conformative tiles.");
+	LOG("image2tiles - Cutting an image into OGC conformal tiles.");
 	LOG("");
 	LOG("Options:");
 	LOG("  -1, --p1               First point using a point string (1)");
