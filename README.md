@@ -15,7 +15,7 @@ Also remember the position in the image (the location in pixels), it's needed be
 ## Running the application
 After finding the points, they can be passed to the application via the `--p1, -1` and `--p2, -2` parameters:
 ```bash
-./image2tiles --p1=0,-23.45,0,64.53 --p2=10000,-24.35,5000,63.71 --file=scan.jpg --zoom-level=13
+./image2tiles --p1=0,-23.45,0,64.53 --p2=10000,-24.35,5000,63.71 --file=scan.jpg --max-zoom-level=13
 ```
 The format of the parameter is:
 ```
