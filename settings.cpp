@@ -311,14 +311,14 @@ verify_settings(settings_t *settings)
 	}
 
 	// output tile size valid
-	if (settings->output_tile_size > 0)
+	if (settings->output_tile_size <= 0)
 	{
 		ELOG("Output tile size must be greater than zero");
 		return 2;
 	}
 
 	// imput file exists
-	if (std::experimental::filesystem::exists(settings->file))
+	if (!std::experimental::filesystem::exists(settings->file))
 	{
 		ELOG("Input file does not exist");
 		return 3;
@@ -327,14 +327,14 @@ verify_settings(settings_t *settings)
 	// TODO output folder valid (writable)
 	
 	// zoom level correct
-	if (settings->zoom_level >= 0 && settings->zoom_level <= 19)
+	if (settings->zoom_level < 0 && settings->zoom_level > 19)
 	{
 		ELOG("The zoom level must be from 0 to 19");
 		return 4;
 	}
 
 	// tile size valid
-	if (settings->tile_size_px > 0)
+	if (settings->tile_size_px <= 0)
 	{
 		ELOG("Calculated tile size is not valid, it must be greater than zero");
 		return 5;
