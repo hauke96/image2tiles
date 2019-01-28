@@ -338,7 +338,7 @@ verify_settings(settings_t *settings)
 	}
 	
 	// zoom level correct
-	if (settings->zoom_level < 0 && settings->zoom_level > 19)
+	if (settings->zoom_level < 0 || settings->zoom_level > 19)
 	{
 		ELOG("The zoom level must be from 0 to 19");
 		return 4;
