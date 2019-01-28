@@ -1,3 +1,6 @@
+/**
+ * An image point is the combination of a location within the image, using pixel X/Y coordinates, and a geo location, using longitude/latitude degrees.
+ */
 typedef struct
 {
 	int x;
@@ -14,6 +17,13 @@ bool operator==(const img_point_t& a, const img_point_t& b)
 			(a.lat == b.lat);
 }
 
+/**
+ * This settings struct represents all necessary information to cut the given image into tiles.
+ *
+ * Some settings are set by the user and some are calculated in fill_tile_settings.
+ *
+ * @see fill_tile_settings.
+ */
 typedef struct settings
 {
 	// Given from user via command line arguments
@@ -194,6 +204,11 @@ parse_args(int argc, char** argv, settings_t *settings)
 	}
 }
 
+/**
+ * Calculates the first tile position, its X/Y coordinates and the file size withing the input image.
+ *
+ * @param settings The settings that will be filled.
+ */
 void
 fill_tile_settings(settings_t *settings)
 {
@@ -276,6 +291,13 @@ fill_tile_settings(settings_t *settings)
 	DLOG("y offset for first tile: %d", settings->first_tile_y_px);
 }
 
+/**
+ * Check if the settings are valid. If not, it prints an error message and
+ * returns and error code.
+ *
+ * @param settings The settings to verify
+ * @return 0 when succeeded, a positive number of not.
+ */
 int
 verify_settings(settings_t *settings)
 {

@@ -11,6 +11,16 @@
 #include "crop.cpp"
 #include "settings.cpp"
 
+/**
+ * Saved the image (tile). The folder structure is:
+ *
+ *    ./{settings.output_folder}/{z}/{x}/{y}.png.
+ *
+ * @param img The image (tile) to store.
+ * @param x_coord The x coordinate of the tile.
+ * @param y_coord The y coordinate of the tile.
+ * @param z The zoom level of this tile.
+ */
 void
 save_image(cv::Mat img, int x_coord, int y_coord, int z)
 {
@@ -19,6 +29,7 @@ save_image(cv::Mat img, int x_coord, int y_coord, int z)
 	std::experimental::filesystem::create_directories(folderName);
 
 	// Write final image to disk
+	// TODO use settings for output folder
 	cv::imwrite("out/" + std::to_string(z) + "/" + std::to_string(x_coord) + "/" + std::to_string(y_coord) + ".png", img);
 }
 
