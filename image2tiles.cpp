@@ -55,6 +55,8 @@ main (int argc, char** argv)
 
 	LOG("Start cuttig image ...");
 
+	// TODO Extract all the logic into several functions? Maybe it makes the code more readable.
+
 	// Set Region of Interest
 	cv::Rect roi;
 	roi.x = settings.first_tile_x_px;

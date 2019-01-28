@@ -17,7 +17,7 @@ sgn(double n)
  * @param number The number in degree
  */
 double
-dcos(double number)
+dcos(double number) // TODO rename to cos_deg?
 {
 	return cos(number * M_PI / 180.0);
 }
@@ -28,7 +28,7 @@ dcos(double number)
  * @param number The number in degree
  */
 double
-dtan(double number)
+dtan(double number) // TODO rename to tan_deg?
 {
 	return tan(number * M_PI / 180.0);
 }

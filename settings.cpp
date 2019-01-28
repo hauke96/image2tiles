@@ -199,6 +199,7 @@ parse_args(int argc, char** argv, settings_t *settings)
 				exit(0);
 			case '?':
 				ELOG("Unrecognized option '%s'", optarg);
+				// TODO maybe we should not directly exit here? When --help is specified, it would be nice to see the usage information anyway. Generally it would be nice to print the help message when an unrecognized parameter is passed.
 				exit(EINVAL);
 		}
 	}
@@ -322,7 +323,7 @@ verify_settings(settings_t *settings)
 		return 3;
 	}
 
-	// output folder valid (writable)
+	// TODO output folder valid (writable)
 	
 	// zoom level correct
 	if (settings->zoom_level >= 0 && settings->zoom_level <= 19)
