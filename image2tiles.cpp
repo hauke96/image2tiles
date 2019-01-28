@@ -11,6 +11,8 @@
 #include "crop.cpp"
 #include "settings.cpp"
 
+#define VERSION "v0.1.0"
+
 /**
  * Saved the image (tile). The folder structure is:
  *
