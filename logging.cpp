@@ -8,7 +8,7 @@ int VERBOSE = 0;
  */
 #define DLOG(fmt, ...) \
 	if (DEBUG) \
-		printf("%s - " fmt "\n", __func__, ##__VA_ARGS__); \
+		printf("DEBUG: %s - " fmt "\n", __func__, ##__VA_ARGS__); \
 
 /**
  * Printing normal information that might not be usable for most users. This is only done when the VERBOSE flag is set (using "--verbose").
@@ -33,7 +33,7 @@ int VERBOSE = 0;
  * Printing text to stderr.
  */
 #define ELOG(fmt, ...) \
-	fprintf(stderr, fmt "\n", ##__VA_ARGS__); \
+	fprintf(stderr, "ERROR: " fmt "\n", ##__VA_ARGS__); \
 
 bool
 req_confirm()
