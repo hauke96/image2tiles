@@ -33,6 +33,53 @@ typedef struct settings
 } settings_t;
 
 void
+print_usage()
+{
+	LOG("image2tiles - Cutting an image into OGC conformative tiles.");
+	LOG("");
+	LOG("Options:");
+	LOG("  -1, --p1               First point using a point string (1)");
+	LOG("  -2, --p2               Second point using a point string (1)");
+	LOG("  -z, --zoom-level       Zoom level (0..19)");
+	LOG("  -t, --tile-size        Size of a tile in pixel (default: 256)");
+	LOG("  -o, --output-folder    Output folder (defult: .out/)");
+	LOG("  -f, --file             The image file that should be cutted");
+	LOG("");
+	LOG("Flags:");
+	LOG("  -v, --verbose          More detailed output");
+	LOG("  -d, --debug            Even more output including debug logging");
+	LOG("      --version          Version of this application");
+	LOG("  -h, --help             Prints this message");
+	LOG("");
+	LOG("");
+	LOG("");
+	LOG("(1) Point string:");
+	LOG("");
+	LOG("A string representing the mapping from an image pixel to longitude/\n\
+latitude degrees. Specifying two points is used to determine the scale and\n\
+starting tiles of the image.");
+	LOG("It is formatted as followed:");
+	LOG("");
+	LOG("    <pixel-X>,<longitude>,<pixel-Y>,<latitude>");
+	LOG("");
+	LOG("Example:");
+	LOG("");
+	LOG("    771,43.55,220,-14.96");
+	LOG("");
+	LOG("The further away these points are on the image, the better is the\n\
+accuracy. Choosing the top-left and bottom-right corners of the image will\n\
+result in the best accuracy. Be sure the points do not have similar x oder y\n\
+coordinated (therefore two diagonal placed points are good)");
+	LOG("To fine the longitude/latitude of a point an online service can be used\n\
+(e.g. https://openstreetmap.org).");
+	LOG("");
+	LOG("");
+	LOG("");
+	LOG("License:     GPL-3.0");
+	LOG("Source code: https://github.com/hauke96/image2tiles");
+}
+
+void
 parse_args(int argc, char** argv, settings_t *settings)
 {
 	// Default settings
@@ -46,22 +93,23 @@ parse_args(int argc, char** argv, settings_t *settings)
 	std::regex point_regex("(" + int_regex_str + "),(" + float_regex_str + "),(" + int_regex_str + "),(" + float_regex_str + ")");
 
 	static struct option long_options[] = {
-		{"zoom-level", required_argument, 0, 'z' },
-		{"tile-size",  required_argument, 0, 't' },
-		{"p1",         required_argument, 0, '1' },
-		{"p2",         required_argument, 0, '2' },
-		{"file",       required_argument, 0, 'f' },
-		{"output",     required_argument, 0, 'o' },
-		{"verbose",    no_argument,       0, 'v' },
-		{"version",    no_argument,       0,  0  },
-		{"debug",      no_argument,       0, 'd' },
-		{0,            0,                 0,  0  }
+		{"zoom-level",    required_argument, 0, 'z' },
+		{"tile-size",     required_argument, 0, 't' },
+		{"p1",            required_argument, 0, '1' },
+		{"p2",            required_argument, 0, '2' },
+		{"file",          required_argument, 0, 'f' },
+		{"output-folder", required_argument, 0, 'o' },
+		{"verbose",       no_argument,       0, 'v' },
+		{"version",       no_argument,       0,  0  },
+		{"debug",         no_argument,       0, 'd' },
+		{"help",          no_argument,       0, 'h' },
+		{0,               0,                 0,  0  }
 	};
 	
 	while (1)
 	{
 		int option_index = 0;
-		int c = getopt_long(argc, argv, "vdo:f:z:1:2:t:",
+		int c = getopt_long(argc, argv, "hvdo:f:z:1:2:t:",
 			long_options, &option_index);
 		if (c == -1)
 		{
@@ -136,6 +184,9 @@ parse_args(int argc, char** argv, settings_t *settings)
 			case 'z':
 				settings->zoom_level = atoi(optarg);
 				break;
+			case 'h':
+				print_usage();
+				exit(0);
 			case '?':
 				ELOG("Unrecognized option '%s'", optarg);
 				exit(EINVAL);
