@@ -24,8 +24,39 @@ int VERBOSE = 0;
 	printf(fmt "\n", ##__VA_ARGS__); \
 
 /**
+ * Printing warning text which is always visible.
+ */
+#define WLOG(fmt, ...) \
+	printf("WARNING: " fmt "\n", ##__VA_ARGS__); \
+
+/**
  * Printing text to stderr.
  */
 #define ELOG(fmt, ...) \
 	fprintf(stderr, fmt "\n", ##__VA_ARGS__); \
 
+bool
+req_confirm()
+{
+	char choice;
+	bool success = false;
+
+    while(true)
+    {
+        std::cout << "Proceed? [Y/n]" << std::endl;
+        std::cin >> choice;
+
+        if (choice == 'N' || choice == 'n')
+		{
+			success = false;
+            break;
+        }
+		else if (choice == 'Y')
+		{
+			success = true;
+			break;
+		}
+    }
+
+	return success;
+}

@@ -324,7 +324,18 @@ verify_settings(settings_t *settings)
 		return 3;
 	}
 
-	// TODO output folder valid (writable)
+	// Output folder already exists -> Warning, data might be overwritten
+	if (std::experimental::filesystem::exists(settings->output_folder))
+	{
+		WLOG("There's already something called '%s'. Data might be overwritten.", settings->output_folder.c_str());
+		bool ok = req_confirm();
+
+		if (!ok)
+		{
+			// Exit but no error occured, so do not return an error code.
+			exit(0);
+		}
+	}
 	
 	// zoom level correct
 	if (settings->zoom_level < 0 && settings->zoom_level > 19)
