@@ -35,6 +35,11 @@ int VERBOSE = 0;
 #define ELOG(fmt, ...) \
 	fprintf(stderr, "ERROR: " fmt "\n", ##__VA_ARGS__); \
 
+/**
+ * Asks the user to proceed.
+ *
+ * @return true is the user wants to proceed, false otherwise.
+ */
 bool
 req_confirm()
 {
