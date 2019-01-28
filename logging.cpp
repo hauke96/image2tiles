@@ -1,8 +1,6 @@
 int DEBUG = 0;
 int VERBOSE = 0;
 
-#define VERSION "v0.1.0"
-
 /**
  * Prints debuggin information. The DEBUG flag (setting with "--debug") must be set.
  */

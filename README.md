@@ -1,5 +1,5 @@
 # image2tiles
-Cuts an image into OGC conformal XYZ-tiles.
+Cuts an image into XYZ-tiles.
 
 # Usage
 To split an image into tiles, it is necessary to determine on what location the image actually is.
