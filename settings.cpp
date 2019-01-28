@@ -50,7 +50,8 @@ print_usage()
 	LOG("Options:");
 	LOG("  -1, --p1               First point using a point string (1)");
 	LOG("  -2, --p2               Second point using a point string (1)");
-	LOG("  -z, --zoom-level       Zoom level (0..19)");
+	LOG("  -z, --max-zoom-level   Maximal zoom level (0..19). Tiles will have a");
+	LOG("                         zoom level less or equal to this.");
 	LOG("  -t, --tile-size        Size of a tile in pixel (default: 256)");
 	LOG("  -o, --output-folder    Output folder (defult: .out/)");
 	LOG("  -f, --file             The image file that should be cutted");
@@ -103,17 +104,17 @@ parse_args(int argc, char** argv, settings_t *settings)
 	std::regex point_regex("(" + int_regex_str + "),(" + float_regex_str + "),(" + int_regex_str + "),(" + float_regex_str + ")");
 
 	static struct option long_options[] = {
-		{"zoom-level",    required_argument, 0, 'z' },
-		{"tile-size",     required_argument, 0, 't' },
-		{"p1",            required_argument, 0, '1' },
-		{"p2",            required_argument, 0, '2' },
-		{"file",          required_argument, 0, 'f' },
-		{"output-folder", required_argument, 0, 'o' },
-		{"verbose",       no_argument,       0, 'v' },
-		{"version",       no_argument,       0,  0  },
-		{"debug",         no_argument,       0, 'd' },
-		{"help",          no_argument,       0, 'h' },
-		{0,               0,                 0,  0  }
+		{"max-zoom-level", required_argument, 0, 'z' },
+		{"tile-size",      required_argument, 0, 't' },
+		{"p1",             required_argument, 0, '1' },
+		{"p2",             required_argument, 0, '2' },
+		{"file",           required_argument, 0, 'f' },
+		{"output-folder",  required_argument, 0, 'o' },
+		{"verbose",        no_argument,       0, 'v' },
+		{"version",        no_argument,       0,  0  },
+		{"debug",          no_argument,       0, 'd' },
+		{"help",           no_argument,       0, 'h' },
+		{0,                0,                 0,  0  }
 	};
 	
 	while (1)

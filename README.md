@@ -29,7 +29,7 @@ Parameters expect an argument, flags do not.
 | - | - |
 | `-1, --p1` | First point using a point string (s. above) |
 | `-2, --p2` | Second point using a point string (s. above) |
-| `-z, --zoom-level` | Zoom level (0..19) |
+| `-z, --max-zoom-level` | Maximal zoom level (0..19). Tiles will have a zoom level less or equal to this. |
 | `-t, --tile-size` | Size of a tile in pixel (default: 256) |
 | `-o, --output-folder` | Output folder (defult: `.out/`) |
 | `-f, --file` | The image file that should be cutted |
