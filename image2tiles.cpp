@@ -17,20 +17,20 @@
  *    ./{settings.output_folder}/{z}/{x}/{y}.png.
  *
  * @param img The image (tile) to store.
+ * @param settings The settings used to determine the output directory.
  * @param x_coord The x coordinate of the tile.
  * @param y_coord The y coordinate of the tile.
  * @param z The zoom level of this tile.
  */
 void
-save_image(cv::Mat img, int x_coord, int y_coord, int z)
+save_image(cv::Mat img, settings_t settings, int x_coord, int y_coord, int z)
 {
 	// Ensure that folder exist
-	std::string folderName = "out/" + std::to_string(z) + "/" + std::to_string(x_coord);
+	std::string folderName = settings.output_folder + "/" + std::to_string(z) + "/" + std::to_string(x_coord);
 	std::experimental::filesystem::create_directories(folderName);
 
 	// Write final image to disk
-	// TODO use settings for output folder
-	cv::imwrite("out/" + std::to_string(z) + "/" + std::to_string(x_coord) + "/" + std::to_string(y_coord) + ".png", img);
+	cv::imwrite(folderName + "/" + std::to_string(y_coord) + ".png", img);
 }
 
 int
@@ -77,7 +77,7 @@ main (int argc, char** argv)
 
 				resize(cropped_img, cropped_img, cv::Size(settings.output_tile_size, settings.output_tile_size), 0, 0, cv::INTER_LINEAR_EXACT);
 
-				save_image(cropped_img, x_coord, y_coord, z);
+				save_image(cropped_img, settings, x_coord, y_coord, z);
 
 				roi.y += roi.height;
 			}
