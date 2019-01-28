@@ -42,7 +42,12 @@ main (int argc, char** argv)
 
 	fill_tile_settings(&settings);
 
-	verify_settings(&settings);
+	int err = verify_settings(&settings);
+	if (err != 0)
+	{
+		ELOG("Exit due to error in the settings")
+		exit(err);
+	}
 
 	LOG("Read image ...");
 	cv::Mat img = cv::imread(settings.file, cv::IMREAD_UNCHANGED);
