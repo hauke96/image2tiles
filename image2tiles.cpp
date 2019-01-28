@@ -64,6 +64,10 @@ main (int argc, char** argv)
 	roi.width = settings.tile_size_px;
 	roi.height = settings.tile_size_px;
 
+	/*
+	 * These loops go from the most detailed zoom level up to the most
+	 * un-detailed zoom level (which is "0") and generate the tiles.
+	 */
 	for (int z = settings.zoom_level; z >= 0; z--)
 	{
 		DLOG("y:%d, y:%d, w:%d, h:%d", roi.x, roi.y, roi.width, roi.height);
@@ -74,6 +78,22 @@ main (int argc, char** argv)
 
 			for (int y_coord = settings.start_y_coord; roi.y <= img.size().height; y_coord++)
 			{
+				/*
+				 * This generates and saves the tile for one zoom level and a
+				 * specific X/Y coordinate.
+				 *
+				 * 1. Create the matrix where the cropped image (which is the
+				 *    tile) should be stored in.
+				 * 2. The part of the tile is cut out of the original image
+				 *    (without changing it). This is done by the crop(...)
+				 *    function. This function also removes overflow (s.
+				 *    overflow_t) and returns a tile with transparent bakground
+				 *    (important at the edged of the original image).
+				 * 3. Resize the raw tile to the output size (usually 256x256).
+				 * 4. Save the image to disk.
+				 * 5. Adjust the y-coordinate in the original image to get the
+				 *    next tile.
+				 */
 				cv::Mat cropped_img(roi.width, roi.height, CV_8UC4, cv::Scalar(0, 0, 0, 0));
 				crop(img, roi, &cropped_img);
 
@@ -84,6 +104,7 @@ main (int argc, char** argv)
 				roi.y += roi.height;
 			}
 
+			// Go to the next "column" and begin at the top of the image
 			roi.x += roi.width;
 			roi.y = settings.first_tile_y_px;
 		}
@@ -108,10 +129,10 @@ main (int argc, char** argv)
 		 *    |        ,        |
 		 * 
 		 * x is the position on e.g. zoom level 13 and x' would then be the
-		 * position on zoom level 12. If a feature is on tile, which has the
-		 * position x:101, it'll appear on the tile x':50 whose origin is
-		 * shifted to the left. This is only the case when the original tile
-		 * has an odd coordinate.
+		 * position on zoom level 14 (higher zoom level means more tiles). If
+		 * a feature is on tile, which has the position x:101, it'll appear on
+		 * the tile x':50 whose origin is shifted to the left. This is only
+		 * the case when the original tile has an odd coordinate.
 		 */
 		if (settings.start_x_coord % 2 != 0)
 		{

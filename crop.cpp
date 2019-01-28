@@ -104,16 +104,26 @@ void
 crop (cv::Mat img, cv::Rect roi, cv::Mat *cropped_img)
 {
 	overflow_t roi_overflow_px;
+
+	/*
+	 * Calculate the overflow of the requested tile to fill the space which is
+	 * out of the image with transparency.
+	 */
 	calc_overflow(img, roi, &roi_overflow_px);
 
+	/*
+	 * Crop the requested area so that there's no space where the original
+	 * image does not contain any data. If this is the case (for example with
+	 * negativ x-coordinate), asserts in OpenCV will fail.
+	 */
 	crop_roi(&roi, &roi_overflow_px);
 
-	// Crop the original image to the defined ROI
+	// Crop the original image to the defined ROI.
 	cv::Mat crop = img(roi);
 
 	cvtColor(crop, crop, cv::COLOR_RGB2RGBA);
 
-	// Put the cropped image onto the background
+	// Put the cropped image onto the transparent background.
 	cv::Rect overflow(roi_overflow_px.left, roi_overflow_px.top, crop.size().width, crop.size().height);
 	crop.copyTo((*cropped_img)(overflow));
 }
