@@ -6,12 +6,12 @@
 
 #include <opencv2/opencv.hpp>
 
+#define VERSION "v0.1.0"
+
 #include "math.cpp"
 #include "logging.cpp"
 #include "crop.cpp"
 #include "settings.cpp"
-
-#define VERSION "v0.1.0"
 
 /**
  * Saved the image (tile). The folder structure is:
