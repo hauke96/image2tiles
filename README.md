@@ -1,6 +1,13 @@
 # image2tiles
 Cuts an image into XYZ-tiles.
 
+## Examples:
+A XYZ-Tile service from a screenshot of the [map.is](https://map.is) service:
+![A part of the [map.is](https://map.is) map](sample/result.png)
+
+A XYZ-Tile service from a handmade sketch-style image:
+![A handmade sketch-style map](sample/result_sketch.png)
+
 # Usage
 To split an image into tiles, it is necessary to determine on what location the image actually is.
 This is done using the longitude/latitude degrees of two points in the image.
