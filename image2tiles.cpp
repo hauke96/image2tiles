@@ -6,7 +6,7 @@
 
 #include <opencv2/opencv.hpp>
 
-#define VERSION "v0.1.0"
+#define VERSION "v0.1.2"
 
 #include "math.cpp"
 #include "logging.cpp"
